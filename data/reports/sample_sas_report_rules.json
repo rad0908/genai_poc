@@ -1,0 +1,34 @@
+{
+    "required_columns": [
+      "UPB($1M)",
+      "Loan Count",
+      "% Units DTS Rural",
+      "DTS%"
+    ],
+    "required_rows": [
+      "Shared Equity",
+      "High needs rural population",
+      "Manufactured Homes Titled as Real Property"
+    ],
+    "cell_validations": {
+      "High needs rural population.Loan Count": 94567,
+      "Shared Equity.Plan Target": 344,
+      "Manufactured Homes Titled as Real Property.UPB($1M)": 8734
+    },
+    "sql_validations": {
+      "db_path": "my_database.sqlite",
+      "queries": [
+        {
+          "query": "SELECT loan_count FROM report_summary WHERE objective = 'Shared Equity'",
+          "row": "Shared Equity",
+          "column": "Loan Count"
+        },
+        {
+          "query": "SELECT upb FROM report_summary WHERE objective = 'High needs rural population'",
+          "row": "High needs rural population",
+          "column": "UPB($1M)"
+        }
+      ]
+    }
+  }
+  

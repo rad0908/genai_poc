@@ -1,0 +1,17 @@
+{
+    "required_columns": [
+      "UPB($1M)",
+      "Loan Count",
+      "% Units DTS Rural",
+      "DTS%"
+    ],
+    "required_rows": [
+      "Shared Equity",
+      "Manufactured Homes Titled as Real Property"
+    ],
+    "cell_validations": {
+      "Shared Equity.Plan Target": 344,
+      "Manufactured Homes Titled as Real Property.UPB($1M)": 8734
+    }
+  }
+  
