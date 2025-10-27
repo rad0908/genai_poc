@@ -82,6 +82,20 @@ def _escape_html(s: str) -> str:
          .replace("'", "&#39;")
     )
 
+def _display_cell(v) -> str:
+    """Pretty printer preserving type semantics for display.
+    Strings are quoted, numbers/booleans use repr, datetimes ISO, nulls as ∅.
+    """
+    try:
+        if pd.isna(v):
+            return "∅"
+    except Exception:
+        pass
+    if isinstance(v, pd.Timestamp):
+        return v.isoformat()
+    if isinstance(v, str):
+        return f'"{v}"'
+    return repr(v)
 
 def _render_table(headers: List[str], rows: List[List[str]]) -> str:
     th = "".join(f"<th>{_escape_html(h)}</th>" for h in headers)
@@ -159,7 +173,7 @@ def _write_summary_log(
             ident = ", ".join([f"{k}={e['pk'][k]}" for k in pk]) if pk else f"row={e['pk']['row']}"
             lines.append(ident)
             for (c, v1, v2) in e["cols"]:
-                lines.append(f"  {c}: A={v1} | B={v2}")
+                lines.append(f"  {c}: A={_display_cell(v1)} | B={_display_cell(v2)}")
     lines.append("")
 
     lines.append("-----------------------column level difference-------------")
@@ -171,7 +185,8 @@ def _write_summary_log(
             lines.append("(no examples)")
         else:
             for (v1, v2, _pkdict) in examples[:10]:
-                lines.append(f"{v1}\t{v2}")
+                lines.append(f"{_display_cell(v1)}\t{_display_cell(v2)}")
+
         lines.append("")
 
     lines.append(f"Time took to compare - {elapsed_seconds} sec")
@@ -246,7 +261,7 @@ def generate_singlefile_report(
                     pkdict = {k: left.iloc[i][k] for k in pk} if pk else {"row": i}
                     v1 = left.iloc[i][c]
                     v2 = right.iloc[i][c]
-                    col_examples[c].append((str(v1) if v1 is not None else "∅", str(v2) if v2 is not None else "∅", pkdict))
+                    col_examples[c].append((v1, v2, pkdict))  # store raw values
         if bad_cols:
             row_mismatch_count += 1
             if len(row_examples) < 10:
@@ -257,7 +272,7 @@ def generate_singlefile_report(
                 for c in bad_cols:
                     v1 = left.iloc[i][c]
                     v2 = right.iloc[i][c]
-                    entry["cols"].append((c, str(v1) if v1 is not None else "∅", str(v2) if v2 is not None else "∅"))
+                    entry["cols"].append((c, v1, v2))  # store raw values
                 row_examples.append(entry)
 
     cell_mismatch_count = sum(per_col_counts.values())
@@ -320,7 +335,7 @@ def generate_singlefile_report(
     for e in row_examples:
         id_cells = ([str(e['pk']['row'])] if not pk else [str(e['pk'][k]) for k in pk])
         for (c, v1, v2) in e["cols"]:
-            row_rows.append(id_cells + [c, v1, v2])
+            row_rows.append(id_cells + [c, _display_cell(v1), _display_cell(v2)])
             row_cls.append([''] * (len(id_cells) + 1) + ['bad', 'bad'])
     sec4 = (
         f"<h2>Section 4 — Top 10 mismatched rows</h2>"
@@ -339,7 +354,7 @@ def generate_singlefile_report(
         rows5_cls: List[List[Optional[str]]] = []
         for (v1, v2, pkdict) in examples[:10]:
             id_cells = ([str(pkdict['row'])] if not pk else [str(pkdict[k]) for k in pk])
-            rows5.append(id_cells + [v1, v2])
+            rows5.append(id_cells + [_display_cell(v1), _display_cell(v2)])
             rows5_cls.append([''] * len(id_cells) + ['bad', 'bad'])
         block = f"<h3>{_escape_html(c)} — {per_col_counts[c]} mismatches</h3>" + _render_table_with_cell_classes(hdr, rows5 or [["(none)"]*len(hdr)], rows5_cls or [[None]*len(hdr)])
         col_blocks.append(block)
@@ -464,7 +479,7 @@ def datacompare_api(
 
 
 # ==============================================================
-# Inline tests (run this file directly)
+# Inline smoke tests (run this file directly)
 # ==============================================================
 
 def _run_inline_tests():

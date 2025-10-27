@@ -1,9 +1,6 @@
-import os
-import json
 from pathlib import Path
 import importlib.util
 import pandas as pd
-import pytest
 
 # Dynamic import of the module under test (assumes tests/ is sibling to module file)
 MODULE_NAME = "generate_diff_site"
